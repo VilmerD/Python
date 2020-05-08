@@ -2,8 +2,8 @@ import unittest
 import numpy as np
 from numpy.linalg import norm
 from numpy import linalg as lin
-from matricies import interpolator2d
-from matricies import restrictor2d
+from Multigrid.matricies import interpolator2d
+from Multigrid.matricies import restrictor2d
 
 
 class TestInterpolator(unittest.TestCase):

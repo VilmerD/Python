@@ -1,36 +1,34 @@
 import numpy as np
 import numpy.linalg as lin
-from Multigrid.gauss_seidel import n_gauss_seidel
+from Multigrid.gauss_seidel import n_gauss_seidel, n_jacobi
 from Multigrid.matricies import interpolator1d, restrictor1d
 
 
 def v_cycle(a, v0, f):
-    n = len(v0)
-    n_levels = int((n - 1) / 2)
-    grid = Grid(n_levels + 1)
-    U = v_cycle_recursive(a, grid, 2, 2, n_levels)
+    grid = Grid(v0, f)
+    U = v_cycle_recursive(a, grid, 2, 2, grid.n_levels - 1)
     return U
 
 
 def v_cycle_recursive(a, grid, n1, n2, level):
-    level = grid.levels[level]
-    v0, f = level.unpack()
+    current_level = grid.levels[level]
+    v0, f = current_level.unpack()
     A = a(level)
     v_tilde = None
 
     if level > 0:
-        v_tilde = n_gauss_seidel(A, v0, f, n1)
-        f_next = restrictor1d(a.dot(v0) - f)
+        v_tilde = n_jacobi(A, v0, f, n1)
+        f_next = restrictor1d(A.dot(v0) - f)
         grid.levels[level - 1].f = f_next
 
         v_previous = v_cycle_recursive(a, grid, n1, n2, level - 1)
 
         v_tilde = v_tilde + interpolator1d(v_previous)
-        v_tilde = n_gauss_seidel(A, v_tilde, f, n2)
+        v_tilde = n_jacobi(A, v_tilde, f, n2)
     else:
-        v_tilde = lin.solve(A.toarray(), v0)
+        v_tilde = lin.solve(A, f)
 
-    level.v = v_tilde
+    current_level.v = v_tilde
     return v_tilde
 
 
@@ -54,20 +52,20 @@ def full_multigrid_recursive(a, v0, f, n0):
 
 class Grid:
 
-    def __init__(self, n_levels):
+    def __init__(self, v0, f0):
+        n_levels = int(np.log2(len(v0) + 1))
         self.levels = []
-        for n in range(0, n_levels):
-            self.levels.append(self.Level(n))
-            self.n_levels = n_levels
-
-    def n_levels(self):
-        return self.n_levels
+        for l in range(0, n_levels - 1):
+            n = 2 ** (l + 1) - 1
+            self.levels.append(self.Level(np.zeros(n, ), np.zeros(n, )))
+        self.n_levels = n_levels
+        self.levels.append(self.Level(v0, f0))
 
     class Level:
 
-        def __init__(self, level):
-            self.v = np.zeros(level * 2 + 1)
-            self.f = np.zeros(level * 2 + 1)
+        def __init__(self, v0, f0):
+            self.v = v0
+            self.f = f0
 
         def unpack(self):
             return self.v, self.f

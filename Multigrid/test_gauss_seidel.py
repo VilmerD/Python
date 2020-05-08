@@ -1,14 +1,14 @@
 import unittest
 import numpy as np
 from numpy import linalg as lin
-from matricies import interpolator1d
-from matricies import restrictor1d
+from Multigrid.matricies import interpolator1d
+from Multigrid.matricies import restrictor1d
 
 
 class TestInterpolator(unittest.TestCase):
     def test_zero(self):
         # Tests that imputing the zero vector returns the zero vector in the new shape
-        v = np.zeros(7).reshape(7,1)
+        v = np.zeros(7).reshape(7, 1)
         self.assertEqual(0, lin.norm(interpolator1d(v)))
         self.assertEqual(15, len(interpolator1d(v)))
 
