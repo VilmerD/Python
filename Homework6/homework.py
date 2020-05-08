@@ -12,15 +12,14 @@ def a(level):
     else:
         return np.array([[8]])
 
-n = 63
+
+n = 131071
 x = np.arange(1, n + 1) / (n + 1)
 tol = 10 ** -2
-f = np.pi ** 2 * np.sin(np.pi*x)
-v = np.zeros(63, )
-for k in range(0, 3):
-    v = v_cycle(a, v, f)
-    print(np.linalg.norm(v))
+f = 4 * np.pi * np.sin(np.pi*x ** 2)
+v = np.zeros(n, )
+u = v_cycle(a, v, f)
 
 fig, ax = plt.subplots()
-plt.plot(x, v - np.sin(np.pi*x), 'r')
+plt.plot(x, u, 'r')
 plt.show()

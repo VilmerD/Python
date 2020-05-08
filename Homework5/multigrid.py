@@ -5,15 +5,16 @@ import scipy.linalg as slin
 import matplotlib.pyplot as plt
 
 
-def interval(n):
-    return (np.arange(1, n + 1) / (n + 1)).reshape((n, 1))
+def interval(n, L=1):
+    dx = L / (n + 1)
+    return (np.arange(1, n + 1) * dx).reshape((n, ))
 
 
 def jacobi(A, D, x, b, w):
-    return x - w * splin.spsolve(D, A.dot(x)) + w * splin.spsolve(D, b)
+    return x - w * splin.spsolve(D, A.dot(x) - b)
 
 
-def njacobi(A, D, x, b, w, n):
+def njacobi(A, D, x, b, n, w=1):
     for k in range(0, n):
         x = jacobi(A, D, x, b, w)
     return x
@@ -41,15 +42,17 @@ def restrictor(v):
         return vnew
 
 
-def twogrid(Afun, b, pre=1, post=0):
+def twogrid(Afun, b, x0=None, pre=1, post=1):
     n = len(b)
     n_l = int((n - 1) / 2)
     A = Afun(n)
     D = sp.csr_matrix(sp.diags(A.diagonal()))
-    x = np.zeros(n)
+    if x0 is None:
+        x0 = np.zeros((n, ))
 
-    xtilde = njacobi(A, D, x, b, 1, pre)
-    r = A.dot(xtilde) - b
+    xtilde = njacobi(A, D, x0, b, 1, pre)
+    x_biss = A.dot(xtilde)
+    r = x_biss - b
     rl_1 = restrictor(r)
     el_1 = splin.spsolve(Afun(n_l), rl_1)
     xtilde = xtilde - interpolator(el_1)
@@ -58,8 +61,9 @@ def twogrid(Afun, b, pre=1, post=0):
     return xtilde
 
 
-def discrete_second(n):
-    return sp.csr_matrix((n + 1) ** 2 * sp.diags([1, -2, 1], [-1, 0, 1], shape=(n, n)))
+def discrete_second(n, L=1):
+    dx = L / (n + 1)
+    return sp.csr_matrix(dx ** -2 * sp.diags([1, -2, 1], [-1, 0, 1], shape=(n, n)))
 
 
 def source(n):
@@ -114,7 +118,3 @@ def control():
     ax1.set_title("Residual")
     ax2.set_title("True error")
     plt.show()
-
-
-figs()
-
