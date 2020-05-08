@@ -67,7 +67,7 @@ def spectrum2():
     plt.plot(x3, y3, '.')
     ax3.set_xlim(1 - 3*10**-14, 1 + 3*10**-14)
 
-    plt.suptitle('Spectrum of the matricies')
+    plt.suptitle('Spectrum of the Matricies')
     ax1.set_title('Without preconditioner')
     ax2.set_title('Gauss-Seidel')
     ax3.set_title('ILU')

@@ -1,6 +1,6 @@
 from Multigrid.multigrid import v_cycle, v_cycle_explicit, full_multigrid
 from Multigrid.matricies import poisson_matrix_1d, interpolator2d, restrictor2d
-from Multigrid.gauss_seidel import gauss_seidel, n_gauss_seidel
+from Multigrid.smoothers import gauss_seidel, n_gauss_seidel
 from mpl_toolkits.mplot3d import Axes3D
 
 import numpy as np
