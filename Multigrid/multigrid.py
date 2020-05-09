@@ -4,16 +4,16 @@ from Multigrid.smoothers import *
 from Multigrid.matricies import interpolator1d, restrictor1d
 
 
-def v_cycle(a, v0, f, pre=3, post=3):
+def v_cycle(a, v0, f, pre=2, post=2, gamma=2):
     grid = Grid(v0, f)
-    v = v_cycle_recursive(a, grid, pre, post, grid.n_levels - 1)
+    v = v_cycle_recursive(a, grid, pre, post, grid.n_levels - 1, gamma)
     return v
 
 
-def v_cycle_recursive(a, grid, n1, n2, level):
+def v_cycle_recursive(a, grid, n1, n2, level, gamma):
     current_level = grid.levels[level]
     v0, f = current_level.unpack()
-    A = a(level)
+    A = a(2 ** (level + 1) - 1)
     v_tilde = None
 
     if level > 0:
@@ -23,8 +23,9 @@ def v_cycle_recursive(a, grid, n1, n2, level):
 
         grid.levels[level - 1].f = f_next
 
-        v_previous = v_cycle_recursive(a, grid, n1, n2, level - 1)
-
+        v_previous = np.nan
+        for g in range(0, gamma):
+            v_previous = v_cycle_recursive(a, grid, n1, n2, level - 1, gamma)
         v_tilde = v_tilde - interpolator1d(v_previous)
         v_tilde = n_jacobi(A, v_tilde, f, n2)
         v_tilde = n_gauss_seidel(A, v_tilde, f, n2)
@@ -63,12 +64,6 @@ class Grid:
             self.levels.append(self.Level(np.zeros(n, ), np.zeros(n, )))
         self.n_levels = n_levels
         self.levels.append(self.Level(v0, f0))
-
-    def get_solutions(self):
-        solutions = []
-        for level in self.levels:
-            solutions.append(level.v)
-        return solutions
 
     class Level:
 
