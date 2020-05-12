@@ -12,8 +12,8 @@ def gauss_seidel(a, x, b):
 
 def n_gauss_seidel(a, x, b, n):
     for k in np.arange(0, n):
-        v0 = gauss_seidel(a, x, b)
-    return v0
+        x = gauss_seidel(a, x, b)
+    return x
 
 
 def jacobi(a, x, b, w):

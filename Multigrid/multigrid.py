@@ -17,8 +17,8 @@ def v_cycle_recursive(a, grid, n1, n2, level, gamma):
     v_tilde = None
 
     if level > 0:
-        v_tilde = n_jacobi(A, v0, f, n1)
-        v_tilde = n_gauss_seidel(A, v_tilde, f, n1)
+        # v_tilde = n_jacobi(A, v0, f, n1)
+        v_tilde = n_gauss_seidel(A, v0, f, n1)
         f_next = restrictor1d(A.dot(v_tilde) - f)
 
         grid.levels[level - 1].f = f_next
@@ -27,7 +27,7 @@ def v_cycle_recursive(a, grid, n1, n2, level, gamma):
         for g in range(0, gamma):
             v_previous = v_cycle_recursive(a, grid, n1, n2, level - 1, gamma)
         v_tilde = v_tilde - interpolator1d(v_previous)
-        v_tilde = n_jacobi(A, v_tilde, f, n2)
+        # v_tilde = n_jacobi(A, v_tilde, f, n2)
         v_tilde = n_gauss_seidel(A, v_tilde, f, n2)
     else:
         v_tilde = lin.solve(A, f)
