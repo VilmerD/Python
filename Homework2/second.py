@@ -6,7 +6,7 @@ import matplotlib.ticker as ticker
 from functools import reduce
 from Homework3.GMRES import gmres
 from itertools import product
-from Homework2.matricies import interval, T, source, F, jacobian
+from Homework2.matricies import interval, T, source, F, J
 
 
 def residuals():

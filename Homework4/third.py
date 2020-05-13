@@ -24,7 +24,7 @@ def nothing(A):
 
 def test1():
     n = 999
-    res, sols, etas, nits = newton(F, jacobian, n, 0.999, M=ilu)
+    res, sols, etas, nits = newton(F, J, n, 0.999, M=ilu)
 
     breakpoints = np.cumsum(np.array(nits) + 1) - 1
     fig, ax = plt.subplots()
@@ -34,20 +34,20 @@ def test1():
 
 def spectrum2():
     n = 99
-    res, sols, etas, nits = newton(F, jacobian, n, 0.1, 15, M=nothing)
+    res, sols, etas, nits = newton(F, J, n, 0.1, 15, M=nothing)
 
-    res, sols_gs, etas, nits = newton(F, jacobian, n, 0.1, 15, M=gauss_seidel)
+    res, sols_gs, etas, nits = newton(F, J, n, 0.1, 15, M=gauss_seidel)
 
-    res, sols_ilu, etas, nits = newton(F, jacobian, n, 0.1, 15, M=ilu)
+    res, sols_ilu, etas, nits = newton(F, J, n, 0.1, 15, M=ilu)
 
-    A = jacobian(sols[0])
+    A = J(sols[0])
     w1, j = splin.eigs(A, k=n - 2)
     y1 = w1.imag
     x1 = w1.real
     ax1 = plt.subplot(131)
     plt.plot(x1, y1, '.')
 
-    A = jacobian(sols_gs[0])
+    A = J(sols_gs[0])
     gs = gauss_seidel(A)(np.eye(n))
     A_gs = A.dot(gs)
     w2, j = splin.eigs(A_gs, k=n - 2)
@@ -57,7 +57,7 @@ def spectrum2():
     plt.plot(x2, y2, '.')
     ax2.set_xlim(1 - 3 * 10 ** -14, 1 + 3 * 10 ** -14)
 
-    A = jacobian(sols_ilu[0])
+    A = J(sols_ilu[0])
     ILU = ilu(A)(np.eye(n))
     A_ilu = A.dot(ILU)
     w3, j = splin.eigs(A_ilu, k=n - 2)
@@ -76,11 +76,11 @@ def spectrum2():
 
 def residuals():
     n = 999
-    res, sols, etas, nits = newton(F, jacobian, n, 0.1, M=nothing)
+    res, sols, etas, nits = newton(F, J, n, 0.1, M=nothing)
 
-    res_gs, sols_gs, etas, nits_gs = newton(F, jacobian, n, 0.1, M=gauss_seidel)
+    res_gs, sols_gs, etas, nits_gs = newton(F, J, n, 0.1, M=gauss_seidel)
 
-    res_ilu, sols_ilu, etas, nits_ilu = newton(F, jacobian, n, 0.1, M=ilu)
+    res_ilu, sols_ilu, etas, nits_ilu = newton(F, J, n, 0.1, M=ilu)
 
     ax1 = plt.subplot(231)
     plt.semilogy(range(0, len(res)), np.abs(res))
@@ -111,7 +111,7 @@ def speed():
     t_ilu = []
     for k in range(0, n1):
         t1 = time()
-        res_ilu, sols_ilu, etas, nits_ilu = newton(F, jacobian, n, 0.1, M=ilu)
+        res_ilu, sols_ilu, etas, nits_ilu = newton(F, J, n, 0.1, M=ilu)
         t = time() - t1
         t_ilu.append(t)
 

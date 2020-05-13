@@ -63,6 +63,11 @@ def figs():
     plt.show()
 
 
-figs()
+def fun():
+    n = 7
+    A = sp.eye(n)
+    precon = v_cycle(lambda N: -a(N), np.zeros((n, n)), A)
+    precon.dot(-a(n).toarray())
 
+fun()
 

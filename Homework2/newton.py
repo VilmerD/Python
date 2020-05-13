@@ -16,7 +16,7 @@ def set_eta(eta_max, gamma, epsilon):
     return calculate_eta
 
 
-def newton(F, J, n, eta_max, max_it=10, M=None):
+def newton(F, J, n, eta_max=0.1, max_it=10, M=lambda x: x):
     tol = 10 ** - 10
     gamma = 0.5
     epsilon = tol
@@ -24,9 +24,6 @@ def newton(F, J, n, eta_max, max_it=10, M=None):
 
     u_0 = np.zeros((n, 1))
     u = u_0.copy()
-
-    if M is None:
-        def M(x): return x
 
     first_norm = slin.norm(F(u_0))
     last_norm = np.nan
