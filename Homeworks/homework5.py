@@ -1,4 +1,4 @@
-from Homework5.twogrid import *
+from Linear_Solvers.twogrid import *
 from Matricies.matricies import *
 import matplotlib.pyplot as plt
 

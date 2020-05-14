@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 
 
-def interval(n, L=1):
+def xrange(n, L=1):
     dx = L / (n + 1)
     return (np.arange(1, n + 1) * dx).reshape((n, ))
 

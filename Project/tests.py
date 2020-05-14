@@ -1,23 +1,16 @@
-from Homework3.GMRES import gmres
-from Matricies.matricies import *
-from Homework2.matricies import *
-from Homework2.newton import *
-from Multigrid.multigrid import *
+from Matricies.nonlinear_matricies import *
+from Newton.newton import newton
+from Newton.preconditioners import *
 import matplotlib.pyplot as plt
-import numpy as np
+from time import time
 
 
-def multigrid_preconditioner(A, n=2):
-    def n_multigrid(b):
-        v0 = np.zeros(b.shape)
-        for k in range(0, n):
-            v0 = v_cycle(A, v0, b)
-        return v0
-    return n_multigrid
-
-
-n = 127
-residuals, sols, etas, nits = newton(F, J, n, M=multigrid_preconditioner)
+n = 2 ** 14 - 1
+t1 = time()
+residuals, sols, etas, nits = newton(F, J, n, M=multigrid)
+print(time() - t1)
 fix, ax = plt.subplots()
-plt.semilogy(abs(residuals))
+plt.semilogy(abs(np.array(residuals)))
 plt.show()
+
+

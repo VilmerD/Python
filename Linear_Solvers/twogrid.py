@@ -1,5 +1,5 @@
 from Matricies.matricies import *
-from Multigrid.smoothers import *
+from Linear_Solvers.multigrid import *
 
 
 def twogrid(Afun, x0, b, pre=2, post=2):

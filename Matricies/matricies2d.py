@@ -35,28 +35,6 @@ def poisson_r(n):
     return csr_matrix(- r * s - t)
 
 
-def interpolator1d(v):
-    n = len(v)
-    u = np.zeros(n + 2)
-    u[1: -1] = v.reshape(n)
-    v_new = np.zeros(2*n + 1)
-
-    for k in np.arange(0, n):
-        v_new[2 * k] = (u[k + 1] + u[k]) / 2
-        v_new[2 * k + 1] = u[k + 1]
-    v_new[-1] = v[-1] / 2
-    return v_new
-
-
-def restrictor1d(v):
-    n = len(v)
-    if n > 1:
-        vnew = np.zeros(int((n - 1) / 2))
-        for k in np.arange(0, int((n - 1) / 2)):
-            vnew[k] = (v[2 * k] + 2 * v[2 * k + 1] + v[2 * k + 2]) / 4
-        return vnew
-
-
 def interpolator2d(v):
     n = int(len(v) ** 0.5)
     v = v.reshape(n, n)

@@ -3,7 +3,7 @@ import numpy as np
 
 
 def interval(n):
-    return (np.arange(1, n + 1) / (n + 1)).reshape((n, 1))
+    return np.arange(1, n + 1) / (n + 1)
 
 
 def T(n):
@@ -12,16 +12,14 @@ def T(n):
 
 def source(n):
     x = interval(n)
-    return 2 * np.ones((n, 1)) - np.sin(x*(1 - x))
+    return 2 * np.ones((n, )) - np.sin(x*(1 - x))
 
 
 def F(u):
     n = len(u)
-    u = u.reshape((n, 1))
     return T(n).dot(u) + source(n) + np.sin(u)
 
 
 def J(u):
     n = len(u)
-    u = u.reshape((n, 1))
-    return T(n) + sp.csr_matrix(sp.diags(np.cos(u).reshape(n, )))
+    return T(n) + sp.csr_matrix(sp.diags(np.cos(u)))

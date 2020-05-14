@@ -1,25 +1,9 @@
-import numpy as np
 import scipy.sparse.linalg as splin
 import scipy.sparse.extract as ex
-from Homework2.matricies import *
-from Homework3.GMRES import gmres
-from Homework2.newton import *
+from Matricies.nonlinear_matricies import *
+from Newton.newton import *
 import matplotlib.pyplot as plt
 from time import time
-
-
-def gauss_seidel(A):
-    L_D = ex.tril(A, 1)
-    return lambda u: splin.spsolve(L_D, u)
-
-
-def ilu(A):
-    inv_approx = splin.spilu(A, fill_factor=4)
-    return lambda u: inv_approx.solve(u)
-
-
-def nothing(A):
-    return lambda u: u
 
 
 def test1():
