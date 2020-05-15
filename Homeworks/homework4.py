@@ -8,7 +8,7 @@ from time import time
 
 def test1():
     n = 999
-    res, sols, etas, nits = newton(F, J, n, 0.999, M=ilu)
+    res, sols, etas, nits = NK(F, J, n, 0.999, M=ilu)
 
     breakpoints = np.cumsum(np.array(nits) + 1) - 1
     fig, ax = plt.subplots()
@@ -18,11 +18,11 @@ def test1():
 
 def spectrum2():
     n = 99
-    res, sols, etas, nits = newton(F, J, n, 0.1, 15, M=nothing)
+    res, sols, etas, nits = NK(F, J, n, 0.1, 15, M=nothing)
 
-    res, sols_gs, etas, nits = newton(F, J, n, 0.1, 15, M=gauss_seidel)
+    res, sols_gs, etas, nits = NK(F, J, n, 0.1, 15, M=gauss_seidel)
 
-    res, sols_ilu, etas, nits = newton(F, J, n, 0.1, 15, M=ilu)
+    res, sols_ilu, etas, nits = NK(F, J, n, 0.1, 15, M=ilu)
 
     A = J(sols[0])
     w1, j = splin.eigs(A, k=n - 2)
@@ -60,11 +60,11 @@ def spectrum2():
 
 def residuals():
     n = 999
-    res, sols, etas, nits = newton(F, J, n, 0.1, M=nothing)
+    res, sols, etas, nits = NK(F, J, n, 0.1, M=nothing)
 
-    res_gs, sols_gs, etas, nits_gs = newton(F, J, n, 0.1, M=gauss_seidel)
+    res_gs, sols_gs, etas, nits_gs = NK(F, J, n, 0.1, M=gauss_seidel)
 
-    res_ilu, sols_ilu, etas, nits_ilu = newton(F, J, n, 0.1, M=ilu)
+    res_ilu, sols_ilu, etas, nits_ilu = NK(F, J, n, 0.1, M=ilu)
 
     ax1 = plt.subplot(231)
     plt.semilogy(range(0, len(res)), np.abs(res))
@@ -95,7 +95,7 @@ def speed():
     t_ilu = []
     for k in range(0, n1):
         t1 = time()
-        res_ilu, sols_ilu, etas, nits_ilu = newton(F, J, n, 0.1, M=ilu)
+        res_ilu, sols_ilu, etas, nits_ilu = NK(F, J, n, 0.1, M=ilu)
         t = time() - t1
         t_ilu.append(t)
 

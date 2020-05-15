@@ -20,10 +20,7 @@ def multigrid_primer(a, dt, L):
     smoother = smooth.RungeKutta(a, dt, L)
 
     def multigrid(A):
-        def multigrid_as_func(x):
-            return v_cycle(A, np.zeros(x.shape), x, smoother)
-
         def multigrid_wrapper(n):
-            return splin.LinearOperator((n, n), multigrid_as_func)
+            return splin.LinearOperator((n, n), lambda x: v_cycle(A, np.zeros(x.shape), x, smoother))
         return multigrid_wrapper
     return multigrid

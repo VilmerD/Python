@@ -4,6 +4,7 @@ import scipy.sparse.linalg as splin
 from Linear_Solvers.GMRES import gmres
 from Linear_Solvers.multigrid import R, P
 import Newton.preconditioners as precon
+from functools import lru_cache
 
 
 def set_eta(eta_max, gamma, epsilon):
@@ -18,8 +19,8 @@ def set_eta(eta_max, gamma, epsilon):
     return calculate_eta
 
 
-def newton(F, J, n, eta_max=0.1, max_it=10, M=lambda _: lambda x: x):
-    tol = 10 ** - 9
+def NK(F, J, n, eta_max=0.1, max_it=10, M=lambda _: lambda x: x):
+    tol = 10 ** - 10
     gamma = 0.5
     epsilon = tol
     next_eta = set_eta(eta_max, gamma, epsilon)
@@ -88,14 +89,15 @@ def JFNK(F, u0, M, eta_max=0.1, max_it=10):
     def approx_J(Fy, y):
         s = y.shape[0]
 
-        def prime(q):
-            return (F(y + jacobian_epsilon * q) - Fy) / jacobian_epsilon
+        def deriv(q):
+            return (F(y + jacobian_epsilon * q.reshape((s, ))) - Fy) / jacobian_epsilon
 
+        @lru_cache
         def wrapper(n):
             if n == s:
-                return splin.LinearOperator((s, s), prime)
+                return splin.LinearOperator((s, s), deriv)
             else:
-                return R(2*n) * wrapper(2*n) * P(2*n)
+                return R(2*n) * wrapper(2*n) * P(2*n)                       # 256 pkt, 64pkr i multigrid beräkna för 128pkt och 256
         return wrapper
 
     k = 0
@@ -120,4 +122,4 @@ def JFNK(F, u0, M, eta_max=0.1, max_it=10):
         sols.append(u)
         k += 1
 
-    return residuals, sols, etas, nits
+    return sols[-1]

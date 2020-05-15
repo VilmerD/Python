@@ -5,10 +5,10 @@ import scipy.sparse.linalg as splin
 from functools import lru_cache
 
 
-def v_cycle(a, v0, f, smoother, gamma=1, level0=0):
+def v_cycle(a, v0, f, smoother, gamma=1, level0=6):
     grid = Grid(v0, f, level0)
-    pre = 1
-    post = 2
+    pre = 10
+    post = 10
 
     def v_cycle_recursive(level):
         current_level = grid.levels[level]
@@ -25,7 +25,7 @@ def v_cycle(a, v0, f, smoother, gamma=1, level0=0):
             current_level.v = current_level.v - P(n)*next_level.v
             smoother(a, current_level, post)
         else:
-            amat = a(1) * np.array([1, ]).T
+            amat = a(n) * np.eye(n)
             current_level.v = splin.spsolve(amat, current_level.f)
 
     v_cycle_recursive(grid.n_levels - 1)
@@ -108,4 +108,4 @@ class Grid:
 
         def __init__(self, v0, f0):
             self.v = v0
-            self.f = f0
+            self.f = f0k

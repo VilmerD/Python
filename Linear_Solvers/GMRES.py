@@ -60,4 +60,4 @@ def gmres(A, b, M, tol=10**-6, x0=None, k_max=None):
                 break
         if nits == 0:
             j = -1
-    return M*x, nits, abs(gamma[-1]/gamma0)
+    return M(m)*x, nits, abs(gamma[-1]/gamma0)

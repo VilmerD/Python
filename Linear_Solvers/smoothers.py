@@ -31,10 +31,8 @@ def RungeKutta(a, dt, L):
         N = b.shape[0]
         h = c1 * L / (a * dt * N)
 
-        def f(u):
-            return A(N) * u - b
-        eta1 = f(x)
-        eta2 = x + h * a1 * f(eta1)
+        x0 = x
+        x1 = x + a1 * h * (-A(N) * x0 + b)
 
-        return x + h*(-1/2 * f(eta1) + 3/2 * f(eta2))
+        return x + h * (-A(N) * x1 + b)
     return RK2

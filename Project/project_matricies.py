@@ -7,5 +7,5 @@ def J(udt):
 
 
 def F(u, dt, uold):
-    return u - uold + dt / 2 * (u ** 2 - np.roll(u, 1) ** 2)
+    return u - uold + dt / 2 * (u ** 2 - np.roll(u, -1) ** 2)
 
