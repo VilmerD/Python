@@ -1,6 +1,9 @@
 import numpy as np
 import scipy.linalg as slin
+import scipy.sparse.linalg as splin
 from Linear_Solvers.GMRES import gmres
+from Linear_Solvers.multigrid import R, P
+import Newton.preconditioners as precon
 
 
 def set_eta(eta_max, gamma, epsilon):
@@ -61,16 +64,17 @@ def newton(F, J, n, eta_max=0.1, max_it=10, M=lambda _: lambda x: x):
     return residuals, sols, etas, nits
 
 
-def jacobian_free(F, n, eta_max=0.1, max_it=10, M=lambda _: lambda x: x):
+def JFNK(F, u0, M, eta_max=0.1, max_it=10):
+    n = u0.shape[0]
     tol = 10 ** - 9
     gamma = 0.5
     epsilon = tol
+    jacobian_epsilon = 10 ** -6
     next_eta = set_eta(eta_max, gamma, epsilon)
 
-    u_0 = np.zeros((n, ))
-    u = u_0.copy()
+    u = u0.copy()
 
-    first_norm = slin.norm(F(u_0))
+    first_norm = slin.norm(F(u0))
     last_norm = np.nan
     current_norm = first_norm
     r = current_norm
@@ -79,19 +83,32 @@ def jacobian_free(F, n, eta_max=0.1, max_it=10, M=lambda _: lambda x: x):
     etas = []
     residuals = []
     nits = []
-    sols = [u_0]
+    sols = [u0]
+
+    def approx_J(Fy, y):
+        s = y.shape[0]
+
+        def prime(q):
+            return (F(y + jacobian_epsilon * q) - Fy) / jacobian_epsilon
+
+        def wrapper(n):
+            if n == s:
+                return splin.LinearOperator((s, s), prime)
+            else:
+                return R(2*n) * wrapper(2*n) * P(2*n)
+        return wrapper
 
     k = 0
     while r/first_norm > tol and k < max_it:
         F_ = F(u)
-        # M_ = M(J_)
+        J = approx_J(F_, u)
 
         if k == 0:
             eta = eta_max
         else:
             eta = next_eta(eta, last_norm, current_norm)
 
-        s, i, r = gmres(-F_, M, tol=eta)
+        s, i, r = gmres(J, -F_, M(J), tol=eta)
         u += s
 
         last_norm = current_norm

@@ -8,7 +8,7 @@ class Iterator:
         self.x = None
 
     def iterate(self):
-        for k in np.arange(1,30):
+        for k in np.arange(1, 30):
             self.function.next()
         self.x = np.zeros(6)
         self.x[0] = self.function.next()

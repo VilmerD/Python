@@ -5,36 +5,39 @@ import scipy.sparse.linalg as splin
 from functools import lru_cache
 
 
-def v_cycle(a, v0, f, pre, post, smoother, gamma=1, level0=6):
+def v_cycle(a, v0, f, smoother, gamma=1, level0=0):
     grid = Grid(v0, f, level0)
+    pre = 1
+    post = 2
 
     def v_cycle_recursive(level):
         current_level = grid.levels[level]
         next_level = grid.levels[level - 1]
-        n = grid.n_levels - level - 1
+        n = current_level.f.shape[0]
 
         if level > 0:
-            current_level.v = smoother(a, current_level.v, current_level.f, pre)
-            next_level.f = R(n)*(a(n).dot(current_level.v) - current_level.f)
+            smoother(a, current_level, pre)
+            next_level.f = R(n)*(a(n) * current_level.v - current_level.f)
 
             for g in range(0, gamma):
                 v_cycle_recursive(level - 1)
 
             current_level.v = current_level.v - P(n)*next_level.v
-            current_level.v = smoother(a, current_level.v, current_level.f, post)
+            smoother(a, current_level, post)
         else:
-            current_level.v = splin.spsolve(a(n), current_level.f)
+            amat = a(1) * np.array([1, ]).T
+            current_level.v = splin.spsolve(amat, current_level.f)
 
     v_cycle_recursive(grid.n_levels - 1)
     return grid.levels[-1].v
 
 
 def R(n):
-    return splin.LinearOperator(agg_res, shape=(2 ** (n - 1), 2 ** n))
+    return splin.LinearOperator((int(n / 2), n), agg_res)
 
 
 def P(n):
-    return splin.LinearOperator(agg_pro, shape=(2 ** (n + 1), 2 ** n))
+    return splin.LinearOperator((n, int(n / 2)), agg_pro)
 
 
 def galerkin(a):
@@ -92,13 +95,13 @@ def agg_pro(v):
 class Grid:
 
     def __init__(self, v0, f0, level0):
-        n_levels = int(np.log2(len(v0) + 1)) - level0 + 1
+        self.n_levels = int(np.log2(len(v0))) - level0 + 1
         self.levels = []
-        for level in range(0, n_levels - 1):
-            n = 2 ** (level + level0) - 1
+        for level in range(0, self.n_levels - 1):
+            n = 2 ** (level + level0)
             v = np.zeros((n, ))
             self.levels.append(self.Level(v, v))
-        self.n_levels = n_levels
+
         self.levels.append(self.Level(v0, f0))
 
     class Level:

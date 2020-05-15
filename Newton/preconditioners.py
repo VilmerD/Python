@@ -3,6 +3,7 @@ import scipy.sparse.linalg as splin
 import scipy.sparse.extract as ex
 from Linear_Solvers.multigrid import v_cycle
 import numpy as np
+import Linear_Solvers.smoothers as smooth
 
 
 def gauss_seidel(A):
@@ -15,14 +16,14 @@ def ilu(A):
     return lambda u: inv_approx.solve(u)
 
 
-def nothing(A):
-    return lambda u: u
+def multigrid_primer(a, dt, L):
+    smoother = smooth.RungeKutta(a, dt, L)
 
+    def multigrid(A):
+        def multigrid_as_func(x):
+            return v_cycle(A, np.zeros(x.shape), x, smoother)
 
-def multigrid(A, n=1):
-    def n_multigrid(b):
-        v0 = np.zeros(b.shape)
-        for k in range(0, n):
-            v0 = v_cycle(A, v0, b, 1, 1)
-        return v0
-    return n_multigrid
+        def multigrid_wrapper(n):
+            return splin.LinearOperator((n, n), multigrid_as_func)
+        return multigrid_wrapper
+    return multigrid

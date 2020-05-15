@@ -1,9 +1,11 @@
-from Matricies.matricies import xrange
 import numpy as np
+from Newton.newton import JFNK
+from Project.project_matricies import F
+from Newton.preconditioners import multigrid_primer
 import matplotlib.pyplot as plt
 
 
-def interval(n, L=1):
+def interval(n, length=1):
     dx = L / n
     return np.arange(0, n) * dx
 
@@ -15,17 +17,13 @@ def eval(func):
 
 
 @eval
-def u0(x):
+def func_u0(x):
     return 2 + np.sin(np.pi*x)
 
 
-def matvec(F, epsilon):
-    def wrapper_matvec(y, q):
-        return
-
-n = 256
-x = interval(n, L=2)
-fig, ax = plt.subplots()
-plt.plot(x, u0(x))
-plt.show()
-
+L=2
+n = 2 ** 8
+x = interval(n, length=L)
+dt = 10 ** -3
+u0 = func_u0(x)
+u1 = JFNK(lambda u: F(u, dt, L), u0, multigrid_primer(max(u0), dt, L))

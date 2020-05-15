@@ -24,11 +24,17 @@ def jacobi(a, x, b, w=2/3):
     return x - w * (a.dot(x) - b) / d
 
 
-def RungeKutta(CFL):
+def RungeKutta(a, dt, L):
     @smoothing_decorator
-    def RK2(A, y, _):
-        a1 = 0.33
-        c1 = 0.99
-        dt = c1/CFL
-        return y + dt*A*y + a1*dt*A*A*y
+    def RK2(A, x, b):
+        a1, c1 = 0.33, 0.99
+        N = b.shape[0]
+        h = c1 * L / (a * dt * N)
+
+        def f(u):
+            return A(N) * u - b
+        eta1 = f(x)
+        eta2 = x + h * a1 * f(eta1)
+
+        return x + h*(-1/2 * f(eta1) + 3/2 * f(eta2))
     return RK2
