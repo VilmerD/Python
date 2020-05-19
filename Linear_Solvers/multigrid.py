@@ -5,10 +5,8 @@ import scipy.sparse.linalg as splin
 from functools import lru_cache
 
 
-def v_cycle(a, v0, f, smoother, gamma=1, level0=6):
+def v_cycle(a, v0, f, smoother, gamma=1, level0=6, pre=10, post=10):
     grid = Grid(v0, f, level0)
-    pre = 10
-    post = 10
 
     def v_cycle_recursive(level):
         current_level = grid.levels[level]
@@ -22,13 +20,35 @@ def v_cycle(a, v0, f, smoother, gamma=1, level0=6):
             for g in range(0, gamma):
                 v_cycle_recursive(level - 1)
 
-            current_level.v = current_level.v - P(n)*next_level.v
+            current_level.v = current_level.v - P(int(n/2))*next_level.v
             smoother(a, current_level, post)
         else:
-            amat = a(n) * np.eye(n)
-            current_level.v = splin.spsolve(amat, current_level.f)
+            current_level.v = splin.spsolve(a(n) * np.eye(n), current_level.f)
 
     v_cycle_recursive(grid.n_levels - 1)
+    return grid.levels[-1].v
+
+
+def FAS(A, v0, f, smoother, gamma=4, level0=5, pre=1):
+    grid = Grid(v0, f, level0)
+    epsilon = 0.9
+
+    def FAS_recursive(level):
+        print("Entering level ({})".format(level + level0))
+        current_level = grid.levels[level]
+        next_level = grid.levels[level - 1]
+
+        smoother(A, current_level, pre)
+
+        if level > 0:
+            n = current_level.v.shape[0]
+            u_tilde = R(n)*current_level.v
+            next_level.f = A(int(n/2)) * u_tilde + epsilon * R(n) * (current_level.f - A(n) * current_level.v)
+            for k in range(0, gamma):
+                FAS_recursive(level-1)
+            current_level.v = current_level.v + P(int(n / 2)) * (next_level.v - u_tilde) / epsilon
+        print("Exiting level ({})".format(level+level0))
+    FAS_recursive(grid.n_levels - 1)
     return grid.levels[-1].v
 
 
@@ -37,17 +57,7 @@ def R(n):
 
 
 def P(n):
-    return splin.LinearOperator((n, int(n / 2)), agg_pro)
-
-
-def galerkin(a):
-    @lru_cache
-    def galerkin_wrapper(n):
-        if n == 0:
-            return a
-        else:
-            return R(n)*(R(n)*galerkin_wrapper(n - 1)).T * 2
-    return galerkin_wrapper
+    return splin.LinearOperator((2 * n, n), agg_pro)
 
 
 def default_res(v):
@@ -108,4 +118,4 @@ class Grid:
 
         def __init__(self, v0, f0):
             self.v = v0
-            self.f = f0k
+            self.f = f0

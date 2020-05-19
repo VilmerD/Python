@@ -11,16 +11,15 @@ def gauss_seidel(A):
     return lambda u: splin.spsolve(L_D, u)
 
 
-def ilu(A):
+def ilu(A, n):
     inv_approx = splin.spilu(A, fill_factor=4)
-    return lambda u: inv_approx.solve(u)
+    return splin.LinearOperator((n, n), lambda u: inv_approx.solve(u))
 
 
-def multigrid_primer(a, dt, L):
-    smoother = smooth.RungeKutta(a, dt, L)
+def multigrid_primer(a1, pseudo_timestep, pre, post):
+    smoother = smooth.RungeKutta(a1, pseudo_timestep)
 
-    def multigrid(A):
-        def multigrid_wrapper(n):
-            return splin.LinearOperator((n, n), lambda x: v_cycle(A, np.zeros(x.shape), x, smoother))
-        return multigrid_wrapper
+    def multigrid(A, s):
+        v = np.zeros((s, ))
+        return splin.LinearOperator((s, s), lambda x: v_cycle(A, v, x, smoother, pre=pre, post=post))
     return multigrid

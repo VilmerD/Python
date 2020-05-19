@@ -22,7 +22,7 @@ def multigrid_tol(f, pre=1, post=3):
     residual = np.linalg.norm(A.dot(u) - f)
     residuals = [residual]
     while residual/residuals[0] > tol:
-        u = v_cycle(A, u, f, pre, post, mode="agg")
+        u = v_cycle(A, u, f, pre, post)
         residual = np.linalg.norm(A.dot(u) - f)
         print(np.log10(residual))
         residuals.append(residual)
@@ -43,14 +43,3 @@ def test_size():
     print(time() - t2)
 
 
-def test_agg():
-    n = 128
-    f = 4 * np.pi ** 2 * np.sin(np.pi * interval(n) ** 2)
-
-    res, u = multigrid_tol(f)
-    fig, ax = plt.subplots()
-    plt.plot(interval(n), u)
-    plt.show()
-
-
-test_agg()

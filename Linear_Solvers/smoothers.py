@@ -24,15 +24,13 @@ def jacobi(a, x, b, w=2/3):
     return x - w * (a.dot(x) - b) / d
 
 
-def RungeKutta(a, dt, L):
+def RungeKutta(a1, pseudo_timestep):
     @smoothing_decorator
     def RK2(A, x, b):
-        a1, c1 = 0.33, 0.99
         N = b.shape[0]
-        h = c1 * L / (a * dt * N)
+        h = pseudo_timestep(N)
 
-        x0 = x
-        x1 = x + a1 * h * (-A(N) * x0 + b)
-
-        return x + h * (-A(N) * x1 + b)
+        def rhs(u):
+            return b - A(N) * u
+        return x + h * rhs(x + a1 * h * rhs(x))
     return RK2

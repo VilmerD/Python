@@ -4,6 +4,7 @@ from Matricies.nonlinear_matricies import *
 from Newton.newton import *
 import matplotlib.pyplot as plt
 from time import time
+from Newton.preconditioners import *
 
 
 def test1():
@@ -12,7 +13,7 @@ def test1():
 
     breakpoints = np.cumsum(np.array(nits) + 1) - 1
     fig, ax = plt.subplots()
-    plt.plot(interval(n), sols[-1])
+    plt.semilogy(res)
     plt.show()
 
 
@@ -100,4 +101,4 @@ def speed():
         t_ilu.append(t)
 
 
-residuals()
+test1()
