@@ -2,14 +2,14 @@ from Linear_Solvers.multigrid import *
 from Project.project_matricies import *
 from Linear_Solvers.smoothers import *
 import scipy.sparse.linalg as splin
-from functools import lru_cache
 import matplotlib.pyplot as plt
 import numpy as np
 from time import time
 
 
 def F_u(u, h):
-    return u + h / 2 * (u ** 2 - np.roll(u, -1) ** 2)
+    up = u ** 2
+    return u + h * u.shape[0] / 4 * (up - np.roll(up, -1))
 
 
 def F_linop(h):
@@ -18,31 +18,29 @@ def F_linop(h):
     return F_wrapper
 
 
-def run_spec(n, dt, pre, cons):
+def run_spec(n):
     L = 2
     x = interval(n, length=L)
     u0 = func_u0(x)
     u = u0.copy()
 
-    pseudo_step = lambda x: cons[1]
-
+    dt = 0.018
     fnorm = np.linalg.norm(u)
+
     residual0 = np.linalg.norm(F_u(u, dt) - u) / fnorm
     residuals = [residual0]
 
     t1 = time()
     while residuals[-1] > 10 ** -9:
-        u = FAS(F_linop(dt), u, u0, RungeKutta(cons[0], pseudo_step), pre=pre)
+        u = FAS(F_linop(dt), u, u0, RungeKutta(0.25, lambda N: 50 / N))
         residual = np.linalg.norm(F_u(u, dt) - u0) / fnorm
         residuals.append(residual)
-        if abs(residuals[-1]/residuals[-2]) > 0.50:
+        if abs(residuals[-1]/residuals[-2]) > 0.999:
             print("Stagnated at: {}".format(residuals[-1]))
             break
-        print(np.log10(residual))
+        print(int(np.log10(residual)))
 
-    fig, ax = plt.subplots()
-    plt.semilogy(residuals)
-    plt.show()
+    return residuals
 
 
 def animate(u):
@@ -63,4 +61,30 @@ def animate(u):
         plt.show()
 
 
-run_spec(2 ** 8, 0.2, 12, (0.3, 0.8))
+def run_specs():
+    N = 2 ** np.array([8, 9, 10])
+
+    nits = []
+    residuals = []
+    for n in N:
+        r = run_spec(n)
+        residuals.append(r)
+
+    lines = []
+    legends = []
+    colors = ['r', 'g', 'b']
+
+    fig, ax1 = plt.subplots()
+    for k in range(0, len(residuals)):
+        col = colors[k]
+        marker = col + '--'
+        lines.append(ax1.semilogy(residuals[k], marker)[0])
+        legends.append('n: {}'.format(N[k]))
+    plt.legend(lines, legends)
+    ax1.set_ylabel('Residual')
+    ax1.set_xlabel('FAS iteration number')
+    plt.title('Plot over residual')
+    plt.show()
+
+
+run_specs()

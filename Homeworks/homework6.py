@@ -1,8 +1,6 @@
 from Linear_Solvers.multigrid import v_cycle
-import matplotlib.pyplot as plt
 from time import time
 from Matricies.matricies import *
-import statistics as st
 import scipy.sparse.linalg as splin
 
 

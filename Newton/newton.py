@@ -63,11 +63,11 @@ def NK(F, J, n, eta_max=0.1, max_it=10, M=lambda _, __: lambda x: x):
     return residuals, sols, etas, nits
 
 
-def JFNK(F, u0, M, eta_max=0.1, max_it=10):
+def JFNK(F, u0, M=lambda _, s: splin.LinearOperator((s, s), lambda x: x), eta_max=0.1, max_it=10):
     n = u0.shape[0]
-    tol = 10 ** - 10
-    gamma = 0.5
+    tol = 10 ** - 9
     epsilon = tol
+    gamma = 0.5
     mrs = 10 ** -7
     next_eta = set_eta(eta_max, gamma, epsilon)
 
@@ -77,11 +77,6 @@ def JFNK(F, u0, M, eta_max=0.1, max_it=10):
     last_norm = np.nan
     current_norm = first_norm
     eta = np.nan
-
-    etas = []
-    residuals = [first_norm]
-    nits = []
-    sols = [u0]
 
     def approx_J(Fy, y):
         S = y.shape[0]
@@ -95,8 +90,11 @@ def JFNK(F, u0, M, eta_max=0.1, max_it=10):
             if k == S:
                 return splin.LinearOperator((S, S), derivative)
             else:
-                return R(2*k) * j_wrapper(2*k) * P(k)
+                return R(4*k) * j_wrapper(4*k) * P(k)
         return j_wrapper
+
+    nits = [0]
+    residuals = [first_norm]
     j = 0
     while current_norm/first_norm > tol and j < max_it:
         F_ = F(u)
@@ -107,16 +105,14 @@ def JFNK(F, u0, M, eta_max=0.1, max_it=10):
         else:
             eta = next_eta(eta, last_norm, current_norm)
 
-        s, i, r = gmres(J(n), -F_, M(J, n), tol=eta, k_max=20)
+        s, i, r = gmres(J(n), -F_, M(J, n), tol=eta, k_max=30)
         u += s
 
         last_norm = current_norm
         current_norm = slin.norm(F(u))
-
-        residuals.append(r)
-        etas.append(eta)
         nits.append(i)
-        sols.append(u)
+        residuals.append(r)
         j += 1
+        print("Newton({}), nGMRES({}), q = {}".format(j, i, int(np.log10(current_norm/first_norm))))
 
-    return sols[-1]
+    return u

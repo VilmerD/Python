@@ -1,4 +1,3 @@
-import scipy.sparse as sp
 import scipy.sparse.linalg as splin
 import scipy.sparse.extract as ex
 from Linear_Solvers.multigrid import v_cycle
@@ -16,10 +15,16 @@ def ilu(A, n):
     return splin.LinearOperator((n, n), lambda u: inv_approx.solve(u))
 
 
-def multigrid_primer(a1, pseudo_timestep, pre, post):
-    smoother = smooth.RungeKutta(a1, pseudo_timestep)
+def multigrid_primer(a1, pseudo_time_step):
+    smoother = smooth.RungeKutta(a1, pseudo_time_step)
+    n = 1
+
+    def n_multigrid(A, v):
+        x = np.zeros(v.shape)
+        for k in range(0, n):
+            x = v_cycle(A, x, v, smoother)
+        return x
 
     def multigrid(A, s):
-        v = np.zeros((s, ))
-        return splin.LinearOperator((s, s), lambda x: v_cycle(A, v, x, smoother, pre=pre, post=post))
+        return splin.LinearOperator((s, s), lambda x: n_multigrid(A, x))
     return multigrid

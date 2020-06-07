@@ -1,13 +1,16 @@
 import numpy as np
-import scipy.sparse as sp
 
 
-def J(udt):
-    return sp.diags((1 + udt, -udt[:-1], -udt[-1]), (0, -1, udt.shape[0] - 1))
+def F(u, dt, dx, uold):
+    return u - uold + dt / (2 * dx) * (u ** 2 - np.roll(u, -1) ** 2)
 
 
-def F(u, dt, uold):
-    return u - uold + dt / 2 * (u ** 2 - np.roll(u, -1) ** 2)
+def F2(u, dt, dx, uold):
+    n = int(len(u) ** 0.5)
+    usqr = u ** 2
+    uoldsqr = uold ** 2
+    return u - uold + dt / (4 * dx) * (2 * usqr - np.roll(usqr, -n) - np.roll(usqr, -1)
+                                       + 2 * uoldsqr - np.roll(uoldsqr, -n) - np.roll(uoldsqr, -1))
 
 
 def interval(n, length=1):
@@ -24,6 +27,12 @@ def evalu0(func):
 
 @evalu0
 def func_u0(x):
-    return 2 + 2 * np.sin(np.pi * x)
+    return 2 + np.sin(np.pi * x)
 
 
+@evalu0
+def func_u02(x):
+    n = x.shape[0]
+    xx, yy = np.meshgrid(x, x)
+    mat = 2 + 2*np.sin(np.pi / 8 * (xx - yy - 4)) * np.sin(np.pi / 8 * xx)
+    return mat.reshape((n ** 2,))
