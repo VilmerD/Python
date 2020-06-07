@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.linalg as slin
 import scipy.sparse.linalg as splin
+import scipy.sparse as sp
 from Linear_Solvers.GMRES import gmres
 from Linear_Solvers.multigrid import R, P
 
@@ -78,21 +79,6 @@ def JFNK(F, u0, M=lambda _, s: splin.LinearOperator((s, s), lambda x: x), eta_ma
     current_norm = first_norm
     eta = np.nan
 
-    def approx_J(Fy, y):
-        S = y.shape[0]
-
-        def derivative(q):
-            norm_q = slin.norm(q)
-            j_eps = mrs / norm_q if norm_q != 0 else 1
-            return (F(y + j_eps * q.reshape((S, ))) - Fy) / j_eps
-
-        def j_wrapper(k):
-            if k == S:
-                return splin.LinearOperator((S, S), derivative)
-            else:
-                return R(4*k) * j_wrapper(4*k) * P(k)
-        return j_wrapper
-
     nits = [0]
     residuals = [first_norm]
     j = 0
@@ -116,3 +102,52 @@ def JFNK(F, u0, M=lambda _, s: splin.LinearOperator((s, s), lambda x: x), eta_ma
         print("Newton({}), nGMRES({}), q = {}".format(j, i, int(np.log10(current_norm/first_norm))))
 
     return u
+
+
+class LinearSystem(object):
+
+    def __init__(self, A, b, dimentions=2):
+        self.n = b.shape[0]
+        self.b = b
+        if callable(A):
+            self.Fy = A(b)
+
+            self.Matrix = False
+        elif sp.issparse(A) or isinstance(A, np.ndarray):
+            self.A = splin.aslinearoperator(A)
+            self.Matrix = True
+        self.M = None
+        self.dimentions = dimentions
+
+    def setRHS(self, b):
+        self.b = b
+        if not self.Matrix:
+            self.Fy = self.A(b)
+
+    def setJacobian(self, F):
+        s = self.n
+
+        def derivative(q):
+            norm_q = slin.norm(q)
+            j_eps = 10 ** (-7) / norm_q if norm_q != 0 else 1
+            return (F(self.b + j_eps * q.reshape((s,))) - self.Fy) / j_eps
+
+        def j_wrapper(k):
+            if k == s:
+                return splin.LinearOperator((s, s), derivative)
+            else:
+                return R(self.dimentions * 2 * k) * j_wrapper(self.dimentions * 2 * k) * P(k)
+
+        self.A = None
+
+    def setRightPreconditioner(self, M):
+        self.M = M
+
+    def residual(self, x):
+        return self.A * x - self.b
+
+    def __mul__(self, other):
+        b = other
+        if self.M is not None:
+            b = self.M * other
+        return self.A * b

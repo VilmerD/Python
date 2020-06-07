@@ -1,4 +1,3 @@
-from Matricies.matricies import *
 from Linear_Solvers.multigrid import *
 
 
