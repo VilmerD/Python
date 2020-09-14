@@ -1,0 +1,8 @@
+from scipy import linalg
+import numpy as np
+
+v = np.array([3, 4]).reshape((1, 2))
+u = np.array([1, 0]).reshape((2, 1))
+
+U, s, V = linalg.svd(u.dot(v), full_matrices=False)
+print('U: \n {} \ns: \n {} \nV: \n{}'.format(U, s, V.T))
