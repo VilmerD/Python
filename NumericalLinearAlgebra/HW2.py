@@ -1,7 +1,8 @@
 import numpy.linalg as linalg
 import scipy.linalg as slin
 import numpy as np
-import scipy.misc as sm
+import matplotlib.pyplot as plt
+from matplotlib import widgets as w
 from NumericalLinearAlgebra.Orthogonalization import Orthogonalization
 
 
@@ -36,8 +37,22 @@ def problem4(A):
     print("Scipy QR:\nQ:\n {}\nR:\n {}".format(sQ, sR))
 
 
-def problem6(A):
-    sm.imread('kvinna.jpg', True)
+def problem6():
+    A = plt.imread('kvinna.jpg')
+    U, S, VT = slin.svd(A)
+    sigmamax = max(S)
+    fig, ax = plt.subplots()
 
-A = np.array([[1., 2.], [4., 5.], [8., 8.]], dtype=float)
-problem4(A)
+    slider_ax = plt.axes([0.3, 0.15, 0.4, 0.01])
+    s = w.Slider(slider_ax, "Maximum sigma", 0, sigmamax, valinit=100)
+
+
+def compremize(A, maximum_sigma):
+    U, S, VT = slin.svd(A)
+    S_nu = np.diag(S)
+    S_nu[S < maximum_sigma] = 0
+    A_nu = U.dot(S_nu.dot(VT))
+    return A_nu
+
+
+problem6()

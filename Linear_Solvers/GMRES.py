@@ -2,9 +2,8 @@ import numpy as np
 import scipy.linalg as splin
 
 
-def gmres(A, b, M, tol=10 ** -9, x0=None, k_max=None):
+def gmres(A, b, M=None, tol=10 ** -9, x0=None, k_max=None):
     m = int(b.shape[0])
-    nits = 0
     if x0 is None:
         x0 = np.zeros((m, ))
     x = x0

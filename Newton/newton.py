@@ -64,38 +64,31 @@ def NK(F, J, n, eta_max=0.1, max_it=10, M=lambda _, __: lambda x: x):
     return residuals, sols, etas, nits
 
 
-def JFNK(F, u0, M=lambda _, s: splin.LinearOperator((s, s), lambda x: x), eta_max=0.1, max_it=10):
+def JFNK(Ab, u0, eta_max=0.1, max_it=10):
     n = u0.shape[0]
     tol = 10 ** - 9
     epsilon = tol
     gamma = 0.5
-    mrs = 10 ** -7
     next_eta = set_eta(eta_max, gamma, epsilon)
 
     u = u0.copy()
 
     first_norm: float = slin.norm(F(u0))
-    last_norm = np.nan
-    current_norm = first_norm
-    eta = np.nan
+    last_norm: float = np.nan
+    current_norm: float = first_norm
+    eta: float = eta_max
 
     nits = [0]
     residuals = [first_norm]
     j = 0
     while current_norm/first_norm > tol and j < max_it:
-        F_ = F(u)
-        J = approx_J(F_, u)
-
-        if j == 0:
-            eta = eta_max
-        else:
-            eta = next_eta(eta, last_norm, current_norm)
-
-        s, i, r = gmres(J(n), -F_, M(J, n), tol=eta, k_max=30)
+        s, i, r = gmres(Ab, tol=eta, k_max=30)
         u += s
 
-        last_norm = current_norm
+        Ab.setRhs(u)
         current_norm = slin.norm(F(u))
+        eta = next_eta(eta, last_norm, current_norm)
+        last_norm = current_norm
         nits.append(i)
         residuals.append(r)
         j += 1
@@ -106,48 +99,55 @@ def JFNK(F, u0, M=lambda _, s: splin.LinearOperator((s, s), lambda x: x), eta_ma
 
 class LinearSystem(object):
 
-    def __init__(self, A, b, dimentions=2):
-        self.n = b.shape[0]
-        self.b = b
-        if callable(A):
-            self.Fy = A(b)
+    def __init__(self, E, h, dimensions=2, M=None):
+        self.n = h.shape[0]
+        self.b = h
 
+        if callable(E):
+            self.Eh = E(self.b)
+            self.E = E
             self.Matrix = False
-        elif sp.issparse(A) or isinstance(A, np.ndarray):
-            self.A = splin.aslinearoperator(A)
+
+        elif sp.issparse(E) or isinstance(E, np.ndarray):
+            self.E = splin.aslinearoperator(E)
             self.Matrix = True
-        self.M = None
-        self.dimentions = dimentions
 
-    def setRHS(self, b):
-        self.b = b
+        self.M = M
+        self.dimensions = dimensions
+
+    def setRHS(self, h):
+        self.b = h
         if not self.Matrix:
-            self.Fy = self.A(b)
+            self.Eh = self.E(h)
 
-    def setJacobian(self, F):
+    def jacobian(self, k):
         s = self.n
+        d = self.dimensions
 
         def derivative(q):
             norm_q = slin.norm(q)
             j_eps = 10 ** (-7) / norm_q if norm_q != 0 else 1
-            return (F(self.b + j_eps * q.reshape((s,))) - self.Fy) / j_eps
+            return (self.E(self.b + j_eps * q.reshape((s, ))) - self.Eh) / j_eps
 
-        def j_wrapper(k):
-            if k == s:
-                return splin.LinearOperator((s, s), derivative)
-            else:
-                return R(self.dimentions * 2 * k) * j_wrapper(self.dimentions * 2 * k) * P(k)
-
-        self.A = None
-
-    def setRightPreconditioner(self, M):
-        self.M = M
+        if k == s:
+            return splin.LinearOperator((s, s), derivative)
+        else:
+            return R(d * 2 * k) * self.jacobian(d * 2 * k) * P(k)
 
     def residual(self, x):
-        return self.A * x - self.b
+        return self.E * x - self.b
 
     def __mul__(self, other):
+        if self.Matrix:
+            return self.E * other
+        else:
+            return self.jacobian(other.shape[0]) * other
+
+    def fNorm(self, b):
+        return
+
+    def AM(self, other):
         b = other
         if self.M is not None:
             b = self.M * other
-        return self.A * b
+        return self * b
