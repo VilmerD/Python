@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.linalg as linalg
 import scipy.linalg as splin
+from scipy.sparse.linalg import LinearOperator
 
 
 def project(q, a):
@@ -14,21 +15,22 @@ def givens_matrix(a):
     return c, s
 
 
-def house_step(A):
-    a = A[:, 0]
-    m, n = A.shape
-    a_hat = np.array([[linalg.norm(a)] + (m - 1) * [0.]]).reshape((m,))
-    v = np.sign(a[0]) * a_hat + a
-    return v / linalg.norm(v)
+def QT_dot_x(Q, s):
+    def inner(u):
+        m, n = s
+        for k in np.arange(n, 0, step=-1):
+            vk = Q[k - 1:, k - 1].reshape((m - k + 1, 1))
+            u[k - 1:] = u[k - 1:] - 2 * vk.dot(vk.T.dot(u[k - 1:]))
+        return u
+    return inner
 
 
 class Orthogonalization:
     def __init__(self, A):
         self.A = A
         self.s = A.shape
-        m, n = self.s
-        self.Q = np.zeros(self.s)
-        self.R = np.zeros((n, n))
+        self.Q = np.zeros((self.s[0], self.s[0]))
+        self.R = np.zeros(self.s)
         self.G = None
 
     def grahm_Schmidt(self):
@@ -49,12 +51,18 @@ class Orthogonalization:
     def householder(self):
         m, n = self.s
         self.R = self.A.copy()
-        for k in range(0, m):
-            Rk = self.R[k:, k:]
-            vk = house_step(Rk)
+        for k in range(0, n):
+            a = self.R[k:, k]
+            a_hat = np.array([[linalg.norm(a)] + (m - k - 1) * [0.]]).reshape((m - k,))
+            v_hat = a - a_hat
+            vk = v_hat / linalg.norm(v_hat)
+
             self.Q[k:, k] = vk
-            self.R[k:, k:] = Rk - 2 * vk.reshape(m-k, 1).dot(vk.reshape((1, m-k)).dot(Rk))
-        return self.R, self.Q
+
+            vk = vk.reshape((m - k, 1))
+            self.R[k:, k:] = self.R[k:, k:] - 2 * vk.dot(vk.T.dot(self.R[k:, k:]))
+        Q_hat = LinearOperator((m, m), QT_dot_x(self.Q, (m, n)))
+        return self.R, Q_hat
 
     def givens_rotations(self):
         m, n = self.s
@@ -65,19 +73,7 @@ class Orthogonalization:
                 print(j, i)
                 ak = self.R[j:j + 2, i]
                 c, s = givens_matrix(ak)
-                self.G =
+                self.G = None
                 self.R[j:j + 2, i] = givens_matrix(ak).dot(ak)
         return self.R
 
-    def QT_dot(self, u):
-        m, n = self.s
-        for k in np.arange(m-1, -1, step=-1):
-            vk = self.Q[k:, k]
-            u[k:] = u[k:] - 2 * vk.dot(vk.dot(u[k:]))
-        return u
-
-
-A = np.random.rand(4, 4)
-OR = Orthogonalization(A)
-R = OR.givens_rotations()
-print(R)
