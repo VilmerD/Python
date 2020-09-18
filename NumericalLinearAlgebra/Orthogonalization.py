@@ -12,7 +12,7 @@ def givens_matrix(a):
     r = linalg.norm(a)
     c = a[0] / r
     s = a[1] / r
-    return c, s
+    return np.array([[c, s], [-s, c]])
 
 
 def QT_dot_x(Q, s):
@@ -31,15 +31,15 @@ class Orthogonalization:
         self.s = A.shape
         self.Q = np.zeros((self.s[0], self.s[0]))
         self.R = np.zeros(self.s)
-        self.G = None
 
     def grahm_Schmidt(self):
         m, n = self.A.shape
         for k in range(0, n):
-            self.Q[:, k] = self.orthogonalize(k)
+            self.Q[:, k] = self.orthogonalize(self.A[:, k], k)
+        Q_hat = self.Q.copy()[:, :n]
+        self.Q = Q_hat
 
-    def orthogonalize(self, k):
-        a = self.A[:, k]
+    def orthogonalize(self, a, k):
         vk = a
         for j in range(0, k):
             qj = self.Q[:, j]
@@ -66,14 +66,13 @@ class Orthogonalization:
 
     def givens_rotations(self):
         m, n = self.s
-        self.G = [[0, 0] * (m*n - m - n + 1)]
-        self.R = self.A.copy()
+        self.Q = np.identity(m)
         for i in range(0, n - 1):
             for j in range(m - 2, i - 1, -1):
-                print(j, i)
-                ak = self.R[j:j + 2, i]
-                c, s = givens_matrix(ak)
-                self.G = None
-                self.R[j:j + 2, i] = givens_matrix(ak).dot(ak)
-        return self.R
-
+                ak = self.A[j:j + 2, i]
+                Gk = givens_matrix(ak)
+                Qk = np.identity(m)
+                Qk[j:j+2, j:j+2] = Gk
+                self.Q = Qk.dot(self.Q)
+                self.A = Qk.dot(self.A)
+        return self.Q.T, self.A
