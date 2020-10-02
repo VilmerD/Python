@@ -75,4 +75,4 @@ def problem6():
 
 m, n = 4, 4
 A = np.random.randint(0, 1001, size=(m, n))
-problem5(A)
+problem6()
