@@ -1,0 +1,72 @@
+from numpy import sin, sqrt, pi, diag, zeros, cumsum, roll, arange, hstack, array
+from scipy.linalg import svd, lu, qr
+from matplotlib import pyplot as plt
+from matplotlib.ticker import AutoMinorLocator
+
+
+def Kahn(n, theta):
+    s = sin(theta)
+    c = sqrt(1 - s ** 2)
+
+    def a_dot_R(a):
+        offdiag = a.copy()
+        offdiag[-1] = 0
+        offdiag = cumsum(roll(offdiag, 1))
+        p = a - c * offdiag
+        return p
+
+    powers = range(0, n)
+    S = diag(s ** powers)
+
+    SR = zeros((n, n))
+    for k in range(0, n):
+        SR[k, :] = a_dot_R(S[k, :])
+    SRT = SR.T
+    return SRT.dot(SR)
+
+
+def testrank():
+    K = Kahn(90, 1.2 * pi / 180)
+    U, s, V = svd(K)
+    Q, R = qr(K)
+    P, L, U = lu(K)
+
+    fig, ax = plt.subplots()
+    xt = hstack((1, 10 * arange(1, 10)))
+
+    ax1 = plt.subplot(311)
+    plt.semilogy(arange(1, 91), abs(s), label='Singular values')
+    plt.grid(True, which="both")
+    plt.xticks(xt)
+    plt.legend()
+
+    ax2 = plt.subplot(312)
+    plt.semilogy(arange(1, 91), abs(diag(R)), label='Magnitude of diag(R)')
+    plt.grid(True, which="both")
+    plt.xticks(xt)
+    plt.legend()
+
+    ax3 = plt.subplot(313)
+    plt.semilogy(arange(1, 91), abs(diag(U)), label='Magnitude of diag(U)')
+    plt.grid(True, which="both")
+    plt.xticks(xt)
+    ax3.set_xlabel("Row/Column number")
+    plt.legend()
+
+    plt.suptitle("Plots of the magnitudes of the diagonals of the matrices $\Sigma$, R and U")
+
+    fig2, ax2 = plt.subplots()
+    plt.semilogy(arange(1, 13), abs(s[:12]))
+    plt.semilogy(arange(1, 13), abs(diag(R[:12])))
+    plt.semilogy(arange(1, 13), abs(diag(U[:12])))
+
+    plt.grid(True, which="both")
+    plt.legend(("Singular values", "Magnitude of diag(R)", "Magnitude of diag(U)"))
+    plt.xticks(range(0, 13))
+    ax2.set_yticks(10 ** (- 1 -2 * arange(4, 8, dtype=float)), minor=True)
+    ax2.set_yticklabels("", minor=True)
+    plt.suptitle("Plots of the magnitudes of the diagonals of the matrices $\Sigma$, R and U, \nfor the first 12 rows")
+    plt.show()
+
+
+testrank()
