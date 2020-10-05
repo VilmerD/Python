@@ -51,7 +51,7 @@ def App():
     for k in range(0, 4):
         ei = eigs[k, 50]
         di = radii[k, 50]
-        circles.append(plt.Circle((ei.real, ei.imag), di, alpha=0.3, edgecolor='k', ))
+        circles.append(plt.Circle((A0[k, k], 0), di, alpha=0.3, edgecolor='k', ))
         ax.add_artist(circles[k])
 
     def update_rings(val):
@@ -69,7 +69,6 @@ def App():
             kreal = wp_real[k]
             dik = di[k]
             circles[k].set_radius(dik)
-            circles[k].set_center((kreal, 0))
         peigs[0].set_data(wp_real, wp_imag)
 
     update_rings.k = 0
@@ -92,47 +91,6 @@ def eigs_and_radii(A0, frames):
         for j in range(0, 4):
             radii[j, k] = sum(abs(Ap[j, :])) - abs(Ap[j, j])
     return eigs, radii
-
-
-def film():
-    frames = 100
-    A0 = np.array([[5, 0, 0, -1], [1, 0, -1, 1], [-1.5, 1, -2, 1], [-1, 1, 3, -3]])
-    eigs, radii = eigs_and_radii(A0, frames)
-    fig, ax = plt.subplots()
-    plt.plot([-10, 10], [0, 0], 'k')
-
-    marker_height = 0.3
-    line = [marker_height / 2, -marker_height / 2]
-    for k in range(1, 5):
-        d = A0[k-1, k-1]
-        plt.plot([d, d], line, 'k')
-        plt.text(d - 0.1, -0.6, "$D_{}$".format(k))
-
-        wrealk = eigs[0]
-        plt.plot([wrealk, wrealk], line, 'k')
-        plt.text(wrealk - 0.1, -0.6, "$\lambda$")
-
-    circles = []
-    for k in range(0, 4):
-        eigk = eigs[k, 0]
-        dk = radii[k, 0]
-        circles.append(plt.Circle((eigk, 0), dk, alpha=0.3, edgecolor='k'))
-        ax.add_artist(circles[k])
-
-    e0 = eigs[:, 0].real
-    shifted_eigs = plt.plot(e0, np.zeros((4, )))
-    plt.show()
-
-    for i in range(0, frames):
-        ei = eigs[:, i]
-        di = radii[:, i]
-        for j in range(0, 4):
-            dd = di[j]
-            circj = circles[j]
-            circj.set_radius(di[j])
-        shifted_eigs[0].set_xdata(ei)
-        plt.pause(0.05)
-        plt.show()
 
 
 def QR_iteration(A):
